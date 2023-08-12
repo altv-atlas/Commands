@@ -1,6 +1,4 @@
-﻿using AltV.Net.Elements.Entities;
-
-namespace AltV.Icarus.Commands.Interfaces;
+﻿namespace AltV.Icarus.Commands.Interfaces;
 
 public interface ICommand
 {

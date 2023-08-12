@@ -1,11 +1,8 @@
-﻿using System.Collections;
-using System.Reflection;
+﻿using System.Reflection;
 using AltV.Icarus.Commands.Interfaces;
 using AltV.Net;
-using AltV.Net.Async;
 using AltV.Net.Elements.Args;
 using AltV.Net.Elements.Entities;
-using AltV.Net.FunctionParser;
 using Microsoft.Extensions.Logging;
 
 namespace AltV.Icarus.Commands;
