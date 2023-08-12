@@ -3,6 +3,7 @@ using System.Reflection;
 using AltV.Icarus.Commands.Interfaces;
 using AltV.Net;
 using AltV.Net.Async;
+using AltV.Net.Elements.Args;
 using AltV.Net.Elements.Entities;
 using AltV.Net.FunctionParser;
 using Microsoft.Extensions.Logging;
@@ -11,118 +12,184 @@ namespace AltV.Icarus.Commands;
 
 public sealed class CommandManager
 {
-    public delegate void CommandDelegate( IPlayer player, string[ ] arguments );
-    public delegate Task AsyncCommandDelegate( IPlayer player, string[ ] arguments );
-    
-    private readonly IDictionary<string, AsyncCommandDelegate> _asyncCommandDelegates =
-        new Dictionary<string, AsyncCommandDelegate>( );
-
-    private readonly IDictionary<string, CommandDelegate> _commandDelegates =
-        new Dictionary<string, CommandDelegate>( );
-    
+    public delegate void CommandDelegate( IPlayer player, string[ ] parameters );
     public event CommandDelegate? OnAnyCommand;
-    public event AsyncCommandDelegate? OnAnyCommandAsync;
+    public event CommandDelegate? OnCommandNotFound;
+    
+    private record RegisteredCommand( Type Type, ICommand Instance );
+    private readonly ICollection<RegisteredCommand> _registeredCommands =
+        new List<RegisteredCommand>( );
 
-    private readonly ICollection<ICommandData> _commands = new List<ICommandData>();
-    
     private readonly ILogger<CommandManager> _logger;
-    
+
     public CommandManager( ILogger<CommandManager> logger )
     {
         _logger = logger;
         _logger.LogInformation( "Command Manager initialized!" );
-        AltAsync.OnClient<IPlayer, string, Task>( CommandModule.EventName, OnCommandAsync );
+        Alt.OnClient<IPlayer, string>( CommandModule.EventName, OnCommandAsync, OnCommandParser );
     }
-    
-    private async Task OnCommandAsync( IPlayer player, string command )
+
+    private void OnCommandParser( IPlayer player, MValueConst[ ] mValueArray, Action<IPlayer, string> action )
     {
-        if( !command.StartsWith( CommandModule.CommandPrefix ) || command.Length < 2 )
+        if( mValueArray.Length != 1 )
+            return;
+
+        var arg = mValueArray[ 0 ];
+
+        if( arg.type != MValueConst.Type.String )
+            return;
+
+        action( player, arg.GetString( ) );
+    }
+
+    private void OnCommandAsync( IPlayer player, string command )
+    {
+        if( string.IsNullOrEmpty( command ) || !command.StartsWith( CommandModule.CommandPrefix ) || command.Length < 2 )
             return;
 
         // Remove prefix from command
         command = command.Trim( ).Remove( 0, 1 );
-        
+
         var args = command.Split( ' ' );
 
-        TriggerAnyKnownCommand( player, args[ 0 ], args[1..] );
-        await TriggerAnyKnownAsyncCommandAsync( player, args[ 0 ], args[1..] );
-        
-        if( OnAnyCommandAsync != null )
-        {
-            foreach( var d in OnAnyCommandAsync.GetInvocationList( ).Cast<AsyncCommandDelegate>( ) )
-            {
-                await d.Invoke( player, args );
-            }
-        }
-        
+        TriggerAnyKnownCommand( player, args );
         OnAnyCommand?.Invoke( player, args );
     }
 
-    private void TriggerAnyKnownCommand( IPlayer player, string command, string[] args )
+    private void TriggerAnyKnownCommand( IPlayer player, string[ ] args )
     {
-        if( !_commandDelegates.TryGetValue( command, out var commandDelegate ) )
+        var command = GetRegisteredCommandByName( args[ 0 ] );
+
+        if( command is null )
+        {
+            OnCommandNotFound?.Invoke(player, args );
+            return;
+        }
+        
+        var methodInfo = command.Type.GetMethod( "OnCommand" );
+
+        if( methodInfo is null )
+            return;
+
+        var parsedArgs = ParseCommandArgs( player, args, methodInfo );
+
+        // If any string value is empty, must've parsed incorrectly or player sent malicious data
+        if( parsedArgs.Any( c => c is string str && string.IsNullOrEmpty( str ) ) )
             return;
         
-        commandDelegate.Invoke( player, args );
+        if( methodInfo.ReturnType == typeof( Task ) )
+        {
+            Task.Run( ( ) => methodInfo.Invoke( command.Instance, parsedArgs ) ).ConfigureAwait( false );
+        }
+        else
+        {
+            methodInfo.Invoke( command.Instance, parsedArgs );
+        }
+    }
+
+    private static object[ ] ParseCommandArgs( IPlayer player, string[ ] args, MethodInfo methodInfo )
+    {
+        var parameters = methodInfo.GetParameters( );
+
+        // player should be first param at all times
+        var parsedArgs = new object[ parameters.Length ];
+        parsedArgs[ 0 ] = ( IPlayer ) player;
+
+        // Skip command name
+        args = args.Skip( 1 ).ToArray( );
+        var argCounter = 0;
+
+        // Loop all "OnCommand" method parameters, skip IPlayer(1st) param
+        for( int i = 1; i < parameters.Length; i++ )
+        {
+            // Failed to parse whatever the player sent, cancel here.
+            if( argCounter >= args.Length ) 
+                break;
+
+            // If its a string, we have some special parsing to do since it could be a sentence
+            if( parameters[ i ].ParameterType == typeof( string ) )
+            {
+                var leftoverArgs = args.Skip( argCounter );
+                
+                // If there is no element after this one, concat all remaining values into 1 string param
+                if( i + 1 >= parameters.Length )
+                {
+                    parsedArgs[ i ] = string.Join( " ", leftoverArgs );
+                    break;
+                }
+
+                parsedArgs[ i ] = ParseStringArg( parameters[ i + 1 ].ParameterType, leftoverArgs, ref argCounter );
+            }
+            // Easy, just a number or so
+            else
+            {
+                parsedArgs[ i ] = Convert.ChangeType( args[ argCounter ], parameters[ i ].ParameterType );
+                argCounter++;
+            }
+        }
+
+        return parsedArgs;
+    }
+
+    private static string ParseStringArg( Type nextParamType, IEnumerable<string> leftoverArgs, ref int argCounter )
+    {
+        var combinedArgs = new List<string>( );
+
+        foreach( var arg in leftoverArgs )
+        {
+            if( IsArgumentOfType( arg, nextParamType ) )
+                break;
+
+            argCounter++;
+            combinedArgs.Add( arg );
+        }
+        
+        return string.Join( " ", combinedArgs );
+    }
+
+    private static bool IsArgumentOfType( string arg, Type type )
+    {
+        try
+        {
+            _ = Convert.ChangeType( arg, type );
+            return true;
+        }
+        catch( Exception ex )
+        {
+            return false;
+        }
     }
     
-    private async Task TriggerAnyKnownAsyncCommandAsync( IPlayer player, string command, string[] args )
+    public ICollection<ICommand> GetCommands( )
     {
-        if( !_asyncCommandDelegates.TryGetValue( command, out var asyncCommandDelegate ) )
-            return;
-
-        await asyncCommandDelegate.Invoke( player, args );
+        return _registeredCommands.Select( c => c.Instance ).ToList( );
     }
 
-    public ICollection<ICommandData> GetCommands( )
+    private RegisteredCommand? GetRegisteredCommandByName( string commandName )
     {
-        return _commands;
+        return _registeredCommands.FirstOrDefault( c => 
+            c.Instance.Name == commandName || 
+            ( c.Instance.Aliases is not null && c.Instance.Aliases.Contains( commandName ) ) 
+        );
     }
 
     public bool Exists( string command )
     {
-        return _commands.Any( c => c.Name == command || c.Aliases.Contains( command ) );
+        return GetCommands().Any( c => c.Name == command || ( c.Aliases is not null && c.Aliases.Contains( command ) ) );
     }
-    
+
     internal void RegisterCommand( Type type, object baseObject )
     {
-        MethodInfo? methodInfo;
+        if( baseObject is not ICommand command )
+            return;
         
-        switch( baseObject )
+        MethodInfo? methodInfo = type.GetMethod( "OnCommand" );
+
+        if( methodInfo is null )
         {
-            case ICommand command:
-                methodInfo = type.GetMethod( "OnCommand" );
-                
-                if( methodInfo is null )
-                    return;
-                
-                var commandDelegate = methodInfo.CreateDelegate<CommandDelegate>( baseObject );
-
-                _commandDelegates[ command.Name ] = commandDelegate;
-
-                foreach( var alias in command.Aliases )
-                {
-                    _commandDelegates[ alias ] = commandDelegate;
-                }
-                break;
-            
-            case IAsyncCommand asyncCommand:
-                methodInfo = type.GetMethod( "OnCommandAsync" );
-                
-                if( methodInfo is null )
-                    return;
-
-                var asyncCommandDelegate = methodInfo.CreateDelegate<AsyncCommandDelegate>( baseObject );
-
-                _asyncCommandDelegates[ asyncCommand.Name ] = asyncCommandDelegate;
-
-                foreach( var alias in asyncCommand.Aliases )
-                {
-                    _asyncCommandDelegates[ alias ] = asyncCommandDelegate;
-                }
-                break;
+            throw new Exception( $"Command {type.FullName} does not implement required method \"OnCommand\"." );
         }
-        
-        _commands.Add( (ICommandData) baseObject );
+                
+        _registeredCommands.Add( new RegisteredCommand( type, command ) );
     }
 }

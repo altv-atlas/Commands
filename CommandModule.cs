@@ -18,7 +18,6 @@ public static class CommandModule
         
         services.AddSingleton<CommandManager>( );
         
-        RegisterCommandType( services, typeof( IAsyncCommand ) );
         RegisterCommandType( services, typeof( ICommand ) );
         
         return services;

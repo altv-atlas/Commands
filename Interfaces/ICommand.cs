@@ -2,7 +2,10 @@
 
 namespace AltV.Icarus.Commands.Interfaces;
 
-public interface ICommand : ICommandData
+public interface ICommand
 {
-    public void OnCommand( IPlayer player, string[ ] args );
+    public string Name { get; set; }
+    public string[ ]? Aliases { get; set; }
+    public string Description { get; set; }
+    public uint RequiredLevel { get; set; }
 }
