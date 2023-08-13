@@ -151,7 +151,7 @@ public sealed class CommandManager
             _ = Convert.ChangeType( arg, type );
             return true;
         }
-        catch( Exception ex )
+        catch( Exception )
         {
             return false;
         }
@@ -184,7 +184,7 @@ public sealed class CommandManager
 
         if( methodInfo is null )
         {
-            throw new Exception( $"Command {type.FullName} does not implement required method \"OnCommand\"." );
+            _logger.LogError( "Command \"{FullName}\" does not implement required method \"OnCommand(IPlayer, ...)\"", type.FullName );
         }
                 
         _registeredCommands.Add( new RegisteredCommand( type, command ) );
