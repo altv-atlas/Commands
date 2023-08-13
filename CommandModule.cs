@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using AltV.Icarus.Commands.Interfaces;
+﻿using AltV.Icarus.Commands.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -18,7 +17,6 @@ public static class CommandModule
         
         services.AddSingleton<CommandManager>( );
         
-        RegisterCommandType( services, typeof( IAsyncCommand ) );
         RegisterCommandType( services, typeof( ICommand ) );
         
         return services;
