@@ -11,10 +11,11 @@
         <RepositoryUrl>https://github.com/altv-icarus/Commands.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PublishUrl>https://github.com/altv-icarus</PublishUrl>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="\"/>
+        <None Include="../README.md" Pack="true" PackagePath="\"/>
         <PackageReference Include="AltV.Net.Async" Version="15.0.139-dev"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0"/>
