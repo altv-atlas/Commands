@@ -87,6 +87,9 @@ jobs:
     # needs: [ validate_nuget, run_test ]
     needs: [ create_nuget ]
     steps:
+      - name: Change to src directory
+        run: cd src
+        
       # Download the NuGet package created in the previous job
       - uses: actions/download-artifact@v3
         with:
