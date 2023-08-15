@@ -12,6 +12,9 @@ namespace AltV.Icarus.Commands;
 /// </summary>
 public sealed class CommandManager
 {
+    /// <summary>
+    /// The command delegate
+    /// </summary>
     public delegate void CommandDelegate( IPlayer player, string[ ] parameters );
  
     /// <summary>
@@ -39,6 +42,10 @@ public sealed class CommandManager
     
     private readonly ILogger<CommandManager> _logger;
 
+    /// <summary>
+    /// The command manager
+    /// </summary>
+    /// <param name="logger">A logger</param>
     public CommandManager( ILogger<CommandManager> logger )
     {
         _logger = logger;
@@ -128,7 +135,7 @@ public sealed class CommandManager
     /// <param name="args">The args to parse</param>
     /// <param name="methodInfo">method info of the target OnCommand method</param>
     /// <returns></returns>
-    private static object[ ] ParseCommandArgs( IPlayer player, string[ ] args, MethodInfo methodInfo )
+    private object[ ] ParseCommandArgs( IPlayer player, string[ ] args, MethodInfo methodInfo )
     {
         var parameters = methodInfo.GetParameters( );
 
@@ -179,7 +186,7 @@ public sealed class CommandManager
     /// <param name="leftoverArgs">Leftover arguments from the string</param>
     /// <param name="argCounter">reference to argCounter</param>
     /// <returns>A string containing the parsed value</returns>
-    private static string ParseStringArg( Type nextParamType, IEnumerable<string> leftoverArgs, ref int argCounter )
+    private string ParseStringArg( Type nextParamType, IEnumerable<string> leftoverArgs, ref int argCounter )
     {
         var combinedArgs = new List<string>( );
 
@@ -202,7 +209,7 @@ public sealed class CommandManager
     /// <param name="arg">The argument to check</param>
     /// <param name="type">The type it should match</param>
     /// <returns>True if it matches, false otherwise</returns>
-    private static bool IsArgumentOfType( string arg, Type type )
+    private bool IsArgumentOfType( string arg, Type type )
     {
         try
         {
