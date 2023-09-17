@@ -1,0 +1,52 @@
+@startuml
+
+set separator ::
+
+interface AltV.Icarus.Commands::ICommand {
+    + <<property>> Name : string 
+    + <<property>> Aliases : string[]
+    + <<property>> Description : string
+    + <<property>> RequiredLevel : uint
+}
+
+class AltV.Icarus.Commands::CommandManager {
+    - _registeredCommands : ICollection<RegisteredCommand>
+    - _logger : ILogger<CommandManager>
+    
+    - <<record>> RegisteredCommand(Type Type, ICommand Instance)
+
+    - OnCommandParser(IPlayer player, MValueConst[] mValueArray, Action<IPlayer, string> action) : void
+    - OnCommand(IPlayer player, string command) : void
+    - TriggerAnyKnownCommand(IPlayer player, string[] args) : void
+
+    - ParseCommandArgs(IPlayer player, string[] args, MethodInfo methodInfo) : object[]
+    - ParseStringArg(Type nextParamType, IEnumerable<string> leftoverArgs, ref int argCounter) : string
+    - IsArgumentOfType(string arg, Type type) : bool
+
+    + <<ctor>> CommandManager(ILogger<CommandManager> logger)
+
+    + <<delegate>> CommandDelegate(IPlayer player, string[] args) : void
+    + <<event>> OnAnyCommand() : CommandDelegate 
+    + <<event>> OnCommandNotFound() : CommandDelegate 
+
+    + GetCommands() : ICollection<ICommand>
+    + GetRegisteredCommandByName(string commandName) : RegisterCommand?
+    + Exists(string command) : boolean
+
+    ~ RegisterCommand(Type type, object baseObject) : void
+}
+
+class AltV.Icarus.Commands::CommandModule <<static>> {
+    - <<static>> Commands : ICollection<Type>
+    ~ <<static>> EventName : string
+    ~ <<static>> CommandPrefix : string
+
+    - <<static>> RegisterCommandType(IServiceCollection services, Type type) : void
+
+    + <<static>> RegisterCommandModule(\n\tthis IServiceCollection services,\n\tstring eventName = "chat:message",\n\tstring commandPrefix = "/"\n) : IServiceProvider
+    + <<static>> InitializeCommandModule(this IServiceProvider serviceProvider) : IServiceProvider
+}
+
+AltV.Icarus.Commands::CommandManager "1" o-- "many" AltV.Icarus.Commands::ICommand : contains
+
+@enduml
