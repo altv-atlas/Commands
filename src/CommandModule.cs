@@ -4,6 +4,9 @@ using Microsoft.Extensions.Logging;
 
 namespace AltV.Icarus.Commands;
 
+/// <summary>
+/// Starting point of the command module
+/// </summary>
 public static class CommandModule
 {
     private static readonly ICollection<Type> Commands = new List<Type>( );
@@ -60,7 +63,6 @@ public static class CommandModule
         var count = 0;
 
         var commandManager = serviceProvider.GetService<CommandManager>( );
-
         var logger = serviceProvider.GetService<ILogger<Logger>>( );
         
         if( commandManager is null || logger is null )

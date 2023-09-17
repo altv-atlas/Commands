@@ -50,7 +50,7 @@ public sealed class CommandManager
     {
         _logger = logger;
         _logger.LogInformation( "Command Manager initialized!" );
-        Alt.OnClient<IPlayer, string>( CommandModule.EventName, OnCommandAsync, OnCommandParser );
+        Alt.OnClient<IPlayer, string>( CommandModule.EventName, OnCommand, OnCommandParser );
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public sealed class CommandManager
     /// </summary>
     /// <param name="player">the player who sent it</param>
     /// <param name="command">the command string to process</param>
-    private void OnCommandAsync( IPlayer player, string command )
+    private void OnCommand( IPlayer player, string command )
     {
         if( string.IsNullOrEmpty( command ) || !command.StartsWith( CommandModule.CommandPrefix ) || command.Length < 2 )
             return;
