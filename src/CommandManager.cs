@@ -69,7 +69,12 @@ public sealed class CommandManager
         if( arg.type != MValueConst.Type.String )
             return;
 
-        action( player, arg.GetString( ) );
+        var command = arg.GetString( ).Trim();
+        
+        if( string.IsNullOrEmpty( command ) || !command.StartsWith( CommandModule.CommandPrefix ) || command.Length < 2 )
+            return;
+        
+        action( player, command.Remove( 0, 1 ) );
     }
 
     /// <summary>
@@ -79,12 +84,6 @@ public sealed class CommandManager
     /// <param name="command">the command string to process</param>
     private void OnCommand( IPlayer player, string command )
     {
-        if( string.IsNullOrEmpty( command ) || !command.StartsWith( CommandModule.CommandPrefix ) || command.Length < 2 )
-            return;
-
-        // Remove prefix from command
-        command = command.Trim( ).Remove( 0, 1 );
-
         var args = command.Split( ' ' );
 
         TriggerAnyKnownCommand( player, args );
