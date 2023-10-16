@@ -1,4 +1,4 @@
-﻿namespace AltV.Icarus.Commands.Interfaces;
+﻿namespace AltV.Atlas.Commands.Interfaces;
 
 /// <summary>
 /// Base interface for any command, implement this interface to register a new command

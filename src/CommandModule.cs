@@ -1,8 +1,8 @@
-﻿using AltV.Icarus.Commands.Interfaces;
+﻿using AltV.Atlas.Commands.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace AltV.Icarus.Commands;
+namespace AltV.Atlas.Commands;
 
 /// <summary>
 /// Starting point of the command module

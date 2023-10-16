@@ -1,11 +1,11 @@
 ﻿using System.Reflection;
-using AltV.Icarus.Commands.Interfaces;
+using AltV.Atlas.Commands.Interfaces;
 using AltV.Net;
 using AltV.Net.Elements.Args;
 using AltV.Net.Elements.Entities;
 using Microsoft.Extensions.Logging;
 
-namespace AltV.Icarus.Commands;
+namespace AltV.Atlas.Commands;
 
 /// <summary>
 /// Handles incoming commands from client-side and emits them through to implemented commands
