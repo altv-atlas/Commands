@@ -7,16 +7,36 @@ using Microsoft.Extensions.Logging;
 
 namespace AltV.Icarus.Commands;
 
+/// <summary>
+/// Handles incoming commands from client-side and emits them through to implemented commands
+/// </summary>
 public sealed class CommandManager
 {
     public delegate void CommandDelegate( IPlayer player, string[ ] parameters );
+ 
+    /// <summary>
+    /// Triggered when any command has been received from a client, whether it's a known or unknown command.
+    /// </summary>
     public event CommandDelegate? OnAnyCommand;
+    
+    /// <summary>
+    /// Triggers when an unknown command was received from a client.
+    /// </summary>
     public event CommandDelegate? OnCommandNotFound;
     
+    /// <summary>
+    /// Record to keep track of a single registered command
+    /// </summary>
+    /// <param name="Type">Type, usually ICommand</param>
+    /// <param name="Instance">instance of a command</param>
     private record RegisteredCommand( Type Type, ICommand Instance );
+    
+    /// <summary>
+    /// List of registered commands
+    /// </summary>
     private readonly ICollection<RegisteredCommand> _registeredCommands =
         new List<RegisteredCommand>( );
-
+    
     private readonly ILogger<CommandManager> _logger;
 
     public CommandManager( ILogger<CommandManager> logger )
@@ -26,6 +46,12 @@ public sealed class CommandManager
         Alt.OnClient<IPlayer, string>( CommandModule.EventName, OnCommandAsync, OnCommandParser );
     }
 
+    /// <summary>
+    /// Parses the command before actually processing it. In case of failure it will not be processed in the next step.
+    /// </summary>
+    /// <param name="player">the player who sent it</param>
+    /// <param name="mValueArray">data that was received</param>
+    /// <param name="action">the action to trigger processing of the command</param>
     private void OnCommandParser( IPlayer player, MValueConst[ ] mValueArray, Action<IPlayer, string> action )
     {
         if( mValueArray.Length != 1 )
@@ -39,6 +65,11 @@ public sealed class CommandManager
         action( player, arg.GetString( ) );
     }
 
+    /// <summary>
+    /// Processes an incoming command
+    /// </summary>
+    /// <param name="player">the player who sent it</param>
+    /// <param name="command">the command string to process</param>
     private void OnCommandAsync( IPlayer player, string command )
     {
         if( string.IsNullOrEmpty( command ) || !command.StartsWith( CommandModule.CommandPrefix ) || command.Length < 2 )
@@ -53,6 +84,11 @@ public sealed class CommandManager
         OnAnyCommand?.Invoke( player, args );
     }
 
+    /// <summary>
+    /// Attempts to trigger any known command
+    /// </summary>
+    /// <param name="player">player who sent the command</param>
+    /// <param name="args">arguments that were sent</param>
     private void TriggerAnyKnownCommand( IPlayer player, string[ ] args )
     {
         var command = GetRegisteredCommandByName( args[ 0 ] );
@@ -84,6 +120,14 @@ public sealed class CommandManager
         }
     }
 
+    /// <summary>
+    /// Attempts to parse a command into it's expected parameter types
+    /// If certain parameters are strings, it will try to combine sentences into 1 string parameter
+    /// </summary>
+    /// <param name="player">The player who sent it</param>
+    /// <param name="args">The args to parse</param>
+    /// <param name="methodInfo">method info of the target OnCommand method</param>
+    /// <returns></returns>
     private static object[ ] ParseCommandArgs( IPlayer player, string[ ] args, MethodInfo methodInfo )
     {
         var parameters = methodInfo.GetParameters( );
@@ -128,12 +172,20 @@ public sealed class CommandManager
         return parsedArgs;
     }
 
+    /// <summary>
+    /// Attempts to parse a string argument
+    /// </summary>
+    /// <param name="nextParamType">Type of the parameter that comes after this</param>
+    /// <param name="leftoverArgs">Leftover arguments from the string</param>
+    /// <param name="argCounter">reference to argCounter</param>
+    /// <returns>A string containing the parsed value</returns>
     private static string ParseStringArg( Type nextParamType, IEnumerable<string> leftoverArgs, ref int argCounter )
     {
         var combinedArgs = new List<string>( );
 
         foreach( var arg in leftoverArgs )
         {
+            // if the next string value matches the type of the next parameter of OnCommand, then this is probably the end of the "sentence".
             if( IsArgumentOfType( arg, nextParamType ) )
                 break;
 
@@ -144,6 +196,12 @@ public sealed class CommandManager
         return string.Join( " ", combinedArgs );
     }
 
+    /// <summary>
+    /// Checks whether a string argument can be converted to the target type
+    /// </summary>
+    /// <param name="arg">The argument to check</param>
+    /// <param name="type">The type it should match</param>
+    /// <returns>True if it matches, false otherwise</returns>
     private static bool IsArgumentOfType( string arg, Type type )
     {
         try
@@ -157,11 +215,20 @@ public sealed class CommandManager
         }
     }
     
+    /// <summary>
+    /// Get a list of all the currently registered commands
+    /// </summary>
+    /// <returns>A list of commands</returns>
     public ICollection<ICommand> GetCommands( )
     {
         return _registeredCommands.Select( c => c.Instance ).ToList( );
     }
 
+    /// <summary>
+    /// Get a registered command by name
+    /// </summary>
+    /// <param name="commandName">The name of the command</param>
+    /// <returns>A registered command if found, null otherwise.</returns>
     private RegisteredCommand? GetRegisteredCommandByName( string commandName )
     {
         return _registeredCommands.FirstOrDefault( c => 
@@ -170,11 +237,21 @@ public sealed class CommandManager
         );
     }
 
+    /// <summary>
+    /// Check if a command exists
+    /// </summary>
+    /// <param name="command">the name of the command (or alias)</param>
+    /// <returns>True if it exists, false otherwise</returns>
     public bool Exists( string command )
     {
         return GetCommands().Any( c => c.Name == command || ( c.Aliases is not null && c.Aliases.Contains( command ) ) );
     }
 
+    /// <summary>
+    /// Register a new command into the command module
+    /// </summary>
+    /// <param name="type">The type of command, by default ICommand</param>
+    /// <param name="baseObject">The instance of the command</param>
     internal void RegisterCommand( Type type, object baseObject )
     {
         if( baseObject is not ICommand command )

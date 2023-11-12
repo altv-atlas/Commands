@@ -10,6 +10,13 @@ public static class CommandModule
     internal static string EventName = "chat:message";
     internal static string CommandPrefix = "/";
     
+    /// <summary>
+    /// Registers the command module
+    /// </summary>
+    /// <param name="services">A service collection</param>
+    /// <param name="eventName">Optional: The event that is used to send/receive commands from client-side. By default this is "chat:message".</param>
+    /// <param name="commandPrefix">Optional: A command prefix which the player has to type before any command. By default set to "/".</param>
+    /// <returns></returns>
     public static IServiceCollection RegisterCommandModule( this IServiceCollection services, string eventName = "chat:message", string commandPrefix = "/" )
     {
         EventName = eventName;
@@ -22,6 +29,11 @@ public static class CommandModule
         return services;
     }
 
+    /// <summary>
+    /// Register a command of a given type.
+    /// </summary>
+    /// <param name="services">A service collection</param>
+    /// <param name="type">The type to register</param>
     private static void RegisterCommandType( IServiceCollection services, Type type )
     {
         var assemblies = AppDomain.CurrentDomain.GetAssemblies( );
@@ -37,6 +49,12 @@ public static class CommandModule
         }
     }
     
+    /// <summary>
+    /// Initializes the command module, instantiates commands etc.
+    /// </summary>
+    /// <param name="serviceProvider">A service provider</param>
+    /// <returns>The service provider</returns>
+    /// <exception cref="NullReferenceException">Thrown when the command module failed to initialize.</exception>
     public static IServiceProvider InitializeCommandModule( this IServiceProvider serviceProvider )
     {
         var count = 0;
