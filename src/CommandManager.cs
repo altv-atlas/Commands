@@ -24,7 +24,7 @@ public sealed class CommandManager
     
     /// <summary>
     /// Triggers when an unknown command was received from a client.
-    /// </summary>
+    /// </summary> 
     public event CommandDelegate? OnCommandNotFound;
     
     /// <summary>
