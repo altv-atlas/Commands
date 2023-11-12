@@ -5,4 +5,4 @@ Commands module for the Icarus project
 Please refer to our [official docs](https://altv-icarus.github.io/docs/index.html) for more information.
 
 ## Class Diagram
-![Class Diagram](https://altv-icarus.github.io/docs/images/commands-module.png)
+![Class Diagram](https://altv-icarus.github.io/docs/images/command-module.png)
