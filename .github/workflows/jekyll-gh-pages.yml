@@ -2,6 +2,12 @@
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
 on:
+  push:
+    branches:
+      - 'master'       # Run the workflow when pushing to the main branch
+  pull_request:
+    branches:
+      - '*'          # Run the workflow for all pull requests
   # Runs on pushes targeting the default branch
   release:
     types: published
