@@ -36,10 +36,10 @@ public sealed class CommandManager
     
     private async Task OnCommandAsync( IPlayer player, string command )
     {
-        if( !command.StartsWith( "/" ) || command.Length < 2 )
+        if( !command.StartsWith( CommandModule.CommandPrefix ) || command.Length < 2 )
             return;
 
-        // Remove "/" from command
+        // Remove prefix from command
         command = command.Trim( ).Remove( 0, 1 );
         
         var args = command.Split( ' ' );

@@ -9,10 +9,12 @@ public static class CommandModule
 {
     private static readonly ICollection<Type> Commands = new List<Type>( );
     internal static string EventName = "chat:message";
+    internal static string CommandPrefix = "/";
     
-    public static IServiceCollection RegisterCommandModule( this IServiceCollection services, string eventName = "chat:message" )
+    public static IServiceCollection RegisterCommandModule( this IServiceCollection services, string eventName = "chat:message", string commandPrefix = "/" )
     {
         EventName = eventName;
+        CommandPrefix = commandPrefix;
         
         services.AddSingleton<CommandManager>( );
         
