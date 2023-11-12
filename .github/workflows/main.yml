@@ -26,6 +26,9 @@ jobs:
   create_nuget:
     runs-on: ubuntu-latest
     steps:
+    - name: Change to src directory
+      run: cd src
+        
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # Get all history to allow automatic versioning using MinVer
@@ -87,8 +90,6 @@ jobs:
     # needs: [ validate_nuget, run_test ]
     needs: [ create_nuget ]
     steps:
-      - name: Change to src directory
-        run: cd src
         
       # Download the NuGet package created in the previous job
       - uses: actions/download-artifact@v3
