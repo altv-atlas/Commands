@@ -1,8 +1,8 @@
 # Commands
-Commands module for the Icarus project
+Commands module for the Atlas project
 
 ## Documentation
-Please refer to our [official docs](https://altv-icarus.github.io/docs/index.html) for more information.
+Please refer to our [official docs](https://altv-atlas.github.io/docs/index.html) for more information.
 
 ## Class Diagram
-![Class Diagram](https://altv-icarus.github.io/docs/images/command-module.png)
+![Class Diagram](https://altv-atlas.github.io/docs/images/command-module.png)
