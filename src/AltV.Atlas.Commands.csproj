@@ -15,9 +15,9 @@
 
     <ItemGroup>
         <None Include="../README.md" Pack="true" PackagePath="\"/>
-        <PackageReference Include="AltV.Net.Async" Version="15.0.173-dev" />
+        <PackageReference Include="AltV.Net.Async" Version="15.0.188-dev" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
     </ItemGroup>
 
 </Project>
