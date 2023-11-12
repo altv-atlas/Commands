@@ -26,9 +26,6 @@ jobs:
   create_nuget:
     runs-on: ubuntu-latest
     steps:
-    - name: Change to src directory
-      run: cd src
-        
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # Get all history to allow automatic versioning using MinVer
@@ -37,6 +34,8 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
 
+    - run: ls
+    - run: cd src
     # Create the NuGet package in the folder from the environment variable NuGetDirectory
     - run: dotnet pack --configuration Release --output ${{ env.NuGetDirectory }}
 
